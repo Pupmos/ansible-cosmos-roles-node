@@ -1,0 +1,5 @@
+---
+- name: Restart cosmovisor
+  become_user: "{{ user }}"
+  shell: sudo service cosmovisor restart
+  listen: "restart cosmovisor"

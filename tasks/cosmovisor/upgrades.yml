@@ -1,0 +1,52 @@
+---
+- name: Upgrade
+  become_user: "{{ user }}"
+  block:
+    - name: Create directory
+      file:
+        path: $HOME/{{ root }}/cosmovisor/upgrades/{{ upgrade }}/bin
+        state: directory
+        mode: "0755"
+      when: upgrade | length > 0
+
+    - name: Copy the binary
+      copy:
+        src: $HOME/go/bin/{{ binary }}
+        dest: $HOME/{{ root }}/cosmovisor/upgrades/{{ upgrade }}/bin
+        remote_src: yes
+        mode: "0755"
+      when: upgrade | length > 0
+
+    - name: Copy the binary
+      copy:
+        src: $HOME/go/bin/{{ binary }}
+        dest: $HOME/{{ root }}/cosmovisor/genesis/bin
+        remote_src: yes
+        mode: "0755"
+      when: upgrade | length == 0
+  when: (binary_release is not defined) and (upgrade is defined)
+
+- name: Upgrade
+  become_user: "{{ user }}"
+  block:
+    - name: Create directory
+      file:
+        path: $HOME/{{ root }}/cosmovisor/upgrades/{{ upgrade }}/bin
+        state: directory
+        mode: "0755"
+
+    - name: Copy the binary
+      copy:
+        src: /usr/bin/{{ binary }}
+        dest: $HOME/{{ root }}/cosmovisor/upgrades/{{ upgrade }}/bin
+        remote_src: yes
+        mode: "0755"
+  when: (binary_release is defined) and (upgrade is defined)
+
+- name: Create symbolic link
+  become_user: "{{ user }}"
+  file:
+    src: $HOME/{{ root }}/cosmovisor/upgrades/{{ upgrade }}
+    dest: $HOME/{{ root }}/cosmovisor/current
+    state: link
+  when: (binary_upgrade is not defined) or (binary_upgrade == "false") or (binary_upgrade == "")

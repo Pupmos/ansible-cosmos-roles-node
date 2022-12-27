@@ -1,0 +1,25 @@
+---
+- name: Checkout the repository
+  become_user: "{{ user }}"
+  git:
+    repo: "{{ repository_url }}"
+    dest: "{{ src_path }}"
+    update: yes
+    force: yes
+    recursive: no
+
+- name: Build
+  become_user: "{{ user }}"
+  block:
+    - name: CosmosHub
+      command: "{{ item }}"
+      args:
+        chdir: "{{ src_path }}"
+      with_items:
+        - git fetch
+        - git checkout {{ version }}
+        - go mod edit -dropreplace github.com/tecbot/gorocksdb
+        - go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
+        - go mod tidy
+        - go install -tags pebbledb -ldflags "-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb {{ ldflags }}" ./...
+      when: target == 'cosmoshub-4'

@@ -1,0 +1,55 @@
+---
+- name: Checkout the repository (gflags)
+  git:
+    repo: https://github.com/gflags/gflags.git
+    dest: /tmp/gflags
+
+- name: Create temp directory (gflags)
+  file:
+    path: /tmp/gflags/build
+    state: directory
+    mode: "0755"
+
+- name: Build (gflags)
+  command: "{{ item }}"
+  args:
+    chdir: /tmp/gflags/build
+  with_items:
+    - cmake -DBUILD_SHARED_LIBS=1 -DGFLAGS_INSTALL_SHARED_LIBS=1 ..
+    - make install
+
+- name: Checkout the repository (rocksdb)
+  git:
+    repo: https://github.com/facebook/rocksdb
+    dest: /tmp/rocksdb
+
+- name: Build (rocksdb)
+  command: "{{ item }}"
+  args:
+    chdir: /tmp/rocksdb
+  with_items:
+    - git checkout {{ rocksdb_version }}
+    - make -j4 install-shared
+    - ldconfig
+
+- name: Checkout the repository
+  become_user: "{{ user }}"
+  git:
+    repo: "{{ repository_url }}"
+    dest: "{{ src_path }}"
+    update: yes
+    force: yes
+    recursive: no
+
+- name: Build
+  become_user: "{{ user }}"
+  command: "{{ item }}"
+  args:
+    chdir: "{{ src_path }}"
+  with_items:
+    - git fetch
+    - git checkout {{ version }}
+    - go install -tags rocksdb -ldflags "-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb {{ ldflags }}" ./...
+  environment:
+    CGO_CFLAGS: "-I/usr/local/include"
+    CGO_LDFLAGS: "-L/usr/local/lib -lrocksdb -lstdc++ -llz4"

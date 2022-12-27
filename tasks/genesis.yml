@@ -1,0 +1,11 @@
+---
+- name: Download genesis
+  become_user: "{{ user }}"
+  get_url:
+    url: "{{ genesis_url }}"
+    dest: $HOME/{{ root }}/config
+    mode: "0644"
+
+- name: Unpack genesis
+  become_user: "{{ user }}"
+  shell: gunzip -c $HOME/{{ root }}/config/genesis.json.gz > $HOME/{{ root }}/config/genesis.json

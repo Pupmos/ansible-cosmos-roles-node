@@ -1,0 +1,36 @@
+---
+- name: Check if the snapshot was already downloaded
+  become_user: "{{ user }}"
+  stat:
+    path: $HOME/{{ root }}/snapshot.{{ snapshot_type }}
+  register: snapshot_downloaded
+
+- name: Download snapshot
+  become_user: "{{ user }}"
+  get_url:
+    url: "{{ snapshot_url }}"
+    dest: $HOME/{{ root }}/snapshot.{{ snapshot_type }}
+    mode: "0644"
+  when: not snapshot_downloaded.stat.exists
+
+- name: Delete data directory
+  become_user: "{{ user }}"
+  file:
+    state: absent
+    path: $HOME/{{ root }}/data
+
+- name: Unpack snapshot
+  become_user: "{{ user }}"
+  shell: lz4 -c -d $HOME/{{ root }}/snapshot.{{ snapshot_type }} | tar -x -C $HOME/{{ root }}
+  when: snapshot_type == "tar.lz4"
+
+- name: Unpack snapshot
+  become_user: "{{ user }}"
+  shell: tar -zxf $HOME/{{ root }}/snapshot.{{ snapshot_type }} -C $HOME/{{ root }}
+  when: (snapshot_type == "tar.gz") or (snapshot_type == "tgz")
+
+- name: Delete snapshot
+  become_user: "{{ user }}"
+  file:
+    path: $HOME/{{ root }}/snapshot.{{ snapshot_type }}
+    state: absent

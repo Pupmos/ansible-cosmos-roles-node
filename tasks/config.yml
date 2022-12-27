@@ -1,0 +1,164 @@
+---
+- name: Get IP address
+  uri:
+    url: "https://api.ipify.org?format=json"
+  register: ip_address
+
+- name: Set external address
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'external_address = "'
+    line: 'external_address = "{{ ip_address.json.ip }}:26656"'
+    state: present
+
+- name: Set moniker
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'moniker = "'
+    line: 'moniker = "{{ moniker }}"'
+    state: present
+
+- name: Set db_backend
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'db_backend = "'
+    line: 'db_backend = "{{ db_backend }}"'
+    state: present
+
+- name: Set log_level
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'log_level = "'
+    line: 'log_level = "error"'
+    state: present
+
+- name: Set seeds
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'seeds = "'
+    line: 'seeds = "{{ seeds }}"'
+    state: present
+
+- name: Set persistent_peers
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'persistent_peers = "'
+    line: 'persistent_peers = "{{ persistent_peers }}"'
+    state: present
+
+- name: Set max_num_inbound_peers
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'max_num_inbound_peers = '
+    line: 'max_num_inbound_peers = 500'
+    state: present
+
+- name: Set max_num_outbound_peers
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'max_num_outbound_peers = '
+    line: 'max_num_outbound_peers = 500'
+    state: present
+
+- name: Set timeout_commit
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/config.toml
+    regexp: 'timeout_commit = "'
+    line: 'timeout_commit = "{{ timeout_commit }}"'
+    state: present
+
+- name: Set minimum-gas-prices
+  become_user: "{{ user }}"
+  lineinfile:
+    path: $HOME/{{ root }}/config/app.toml
+    regexp: 'minimum-gas-prices = "'
+    line: 'minimum-gas-prices = "{{ minimum_gas_prices }}"'
+    state: present
+
+- name: Enable API
+  replace:
+    path: $HOME/{{ root }}/config/app.toml
+    regexp: "# Enable defines if the API(.*)\\senable = false"
+    replace: "# Enable defines if the API server should be enabled.\\nenable = true"
+  when: node_type == 'rpc'
+
+- name: Enable Swagger
+  lineinfile:
+    path: $HOME/{{ root }}/config/app.toml
+    regexp: 'swagger = '
+    line: 'swagger = true'
+    state: present
+  when: node_type == 'rpc'
+
+- name: Enable gRPC
+  replace:
+    path: $HOME/{{ root }}/config/app.toml
+    regexp: "# Enable defines if the gRPC(.*)\\senable = false"
+    replace: "# Enable defines if the gRPC server should be enabled.\\nenable = true"
+  when: node_type == 'rpc'
+
+- name: Pruning (Default)
+  block:
+    - name: Settings
+      become_user: "{{ user }}"
+      lineinfile:
+        path: $HOME/{{ root }}/config/app.toml
+        regexp: "{{ item.old }}"
+        line: "{{ item.new }}"
+        state: present
+      loop:
+        - { old: 'pruning = "', new: 'pruning = "custom"' }
+        - { old: 'pruning-keep-recent = "', new: 'pruning-keep-recent = "100"' }
+        - { old: 'pruning-interval = "', new: 'pruning-interval = "10"' }
+        - { old: 'snapshot-interval = ', new: 'snapshot-interval = 0' }
+
+    - name: Indexer
+      become_user: "{{ user }}"
+      lineinfile:
+        path: $HOME/{{ root }}/config/config.toml
+        regexp: "{{ item.old }}"
+        line: "{{ item.new }}"
+        state: present
+      loop:
+        - { old: 'indexer = "', new: 'indexer = "null"' }
+  when: (node_type == "validator") or (node_type == "backup")
+
+- name: Pruning (RPC)
+  block:
+    - name: Settings
+      become_user: "{{ user }}"
+      lineinfile:
+        path: $HOME/{{ root }}/config/app.toml
+        regexp: "{{ item.old }}"
+        line: "{{ item.new }}"
+        state: present
+      loop:
+        - { old: 'pruning = "', new: 'pruning = "custom"' }
+        - { old: 'pruning-keep-recent = "', new: 'pruning-keep-recent = "362880"' }
+        - { old: 'pruning-keep-every = "', new: 'pruning-keep-every = "0"' }
+        - { old: 'pruning-interval = "', new: 'pruning-interval = "100"' }
+        - { old: 'snapshot-interval = ', new: 'snapshot-interval = 0' }
+        - { old: 'snapshot-keep-recent = ', new: 'snapshot-keep-recent = 2' }
+  when: (node_type == "rpc") and (archive is not defined)
+
+- name: Pruning (RPC Archive)
+  block:
+    - name: Settings
+      become_user: "{{ user }}"
+      lineinfile:
+        path: $HOME/{{ root }}/config/app.toml
+        regexp: "{{ item.old }}"
+        line: "{{ item.new }}"
+        state: present
+      loop:
+        - { old: 'pruning = "', new: 'pruning = "nothing"' }
+  when: (node_type == "rpc") and (archive is defined and archive == "yes")

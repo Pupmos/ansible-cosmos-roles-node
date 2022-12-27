@@ -1,0 +1,35 @@
+---
+- name: Setup
+  block:
+    - include: build.yml
+
+    - include: init.yml
+
+    - include: genesis.yml
+
+    - include: cosmovisor/setup.yml
+
+    - include: cosmovisor/upgrades.yml
+      when: (upgrade is defined) and (upgrade != "")
+
+    - include: snapshot.yml
+      when: apply_snapshot == "yes"
+
+    - include: config.yml
+
+    - name: Restart cosmovisor
+      command: echo "restarting cosmovisor"
+      notify: "restart cosmovisor"
+  when: (binary_upgrade is not defined) or (binary_upgrade == "false") or (binary_upgrade == "")
+
+- name: Upgrade
+  block:
+    - include: build.yml
+
+    - include: cosmovisor/upgrades.yml
+
+    - name: Restart cosmovisor
+      command: echo "restarting cosmovisor"
+      notify: "restart cosmovisor"
+      when: (restart_cosmovisor is defined) and (restart_cosmovisor == "true")
+  when: (binary_upgrade is defined) and (binary_upgrade == "true")

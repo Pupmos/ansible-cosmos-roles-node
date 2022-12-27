@@ -1,0 +1,47 @@
+---
+- name: Install cosmovisor
+  become_user: "{{ user }}"
+  shell: go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.0.0
+
+- name: Copy cosmovisor.service
+  template:
+    src: cosmovisor.service.j2
+    dest: /etc/systemd/system/cosmovisor.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Set cosmovisor to start on boot
+  systemd:
+    name: cosmovisor
+    enabled: yes
+    masked: no
+
+- name: Create default cosmovisor directories
+  become_user: "{{ user }}"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  with_items:
+    - $HOME/{{ root }}/cosmovisor/genesis/bin
+    - $HOME/{{ root }}/cosmovisor/upgrades
+
+- name: Allow the user to run cosmovisor
+  community.general.sudoers:
+    name: cosmovisor
+    state: present
+    user: "{{ user }}"
+    commands:
+      - /usr/sbin/service cosmovisor stop
+      - /usr/sbin/service cosmovisor start
+      - /usr/sbin/service cosmovisor restart
+
+- name: Copy the binary
+  become_user: "{{ user }}"
+  copy:
+    src: $HOME/go/bin/{{ binary }}
+    dest: $HOME/{{ root }}/cosmovisor/genesis/bin
+    remote_src: yes
+    mode: "0755"
+  when: (upgrade == "") or (upgrade is not defined)

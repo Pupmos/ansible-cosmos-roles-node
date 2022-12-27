@@ -1,0 +1,53 @@
+---
+- name: Build
+  block:
+    - name: RocksDB
+      include: backends/rocksdb.yml
+      when: db_backend == 'rocksdb'
+
+    - name: PebbleDB
+      include: backends/pebbledb.yml
+      when: db_backend == 'pebbledb'
+
+    - name: LevelDB
+      include: backends/goleveldb.yml
+      when: db_backend == 'goleveldb'
+  when: (binary_release is not defined) or (binary_release == "false") or (binary_release == "")
+
+- name: Use a pre-built binary
+  become_user: "{{ user }}"
+  block:
+    - name: Download
+      get_url:
+        url: "{{ repository_url }}/releases/download/{{ version }}/{{ binary_release }}"
+        dest: /tmp/{{ binary_release }}
+        mode: "0644"
+      when: binary_package_type is undefined
+
+    - name: Download
+      get_url:
+        url: "{{ repository_url }}/releases/download/{{ version }}/{{ binary_release }}.{{ binary_package_type }}"
+        dest: /tmp/{{ binary_release }}.{{ binary_package_type }}
+        mode: "0644"
+      when: binary_package_type is defined
+
+    - name: Install
+      apt:
+        deb: /tmp/{{ binary_release }}
+      when: (binary_package_type is defined) and (binary_package_type == "deb")
+
+    - name: Install
+      unarchive:
+        src: /tmp/{{ binary_release }}.{{ binary_package_type }}
+        dest: /usr/bin/{{ binary }}
+        remote_src: yes
+      when: (binary_package_type is defined) and (binary_package_type == "tar.gz")
+
+    - name: Copy
+      copy:
+        src: "{{ binary_path }}/{{ binary_release }}"
+        dest: /usr/bin/{{ binary }}
+        remote_src: yes
+        mode: "0755"
+      when: binary_package_type is undefined
+  when: binary_release is defined

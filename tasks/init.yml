@@ -1,0 +1,4 @@
+---
+- name: Init
+  become_user: "{{ user }}"
+  shell: "{{ binary }} init {{ moniker }} --chain-id {{ chain_id }} --overwrite"

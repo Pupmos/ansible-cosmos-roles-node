@@ -1,0 +1,19 @@
+---
+- name: Checkout the repository
+  become_user: "{{ user }}"
+  git:
+    repo: "{{ repository_url }}"
+    dest: "{{ src_path }}"
+    update: yes
+    force: yes
+    recursive: no
+
+- name: Build
+  become_user: "{{ user }}"
+  command: "{{ item }}"
+  args:
+    chdir: "{{ src_path }}"
+  with_items:
+    - git fetch
+    - git checkout {{ version }}
+    - make install
