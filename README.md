@@ -1,6 +1,6 @@
-# Ansible
+# Pupmos/ansible-cosmos-roles-node
 
-An ansible role for configuring a new Cosmos full-node.
+An Ansible role for configuring a new Cosmos full-node.
 
 ## Usage
 
