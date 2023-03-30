@@ -85,6 +85,7 @@
     state: present
 
 - name: Enable API
+  become_user: "{{ user }}"
   replace:
     path: $HOME/{{ root }}/config/app.toml
     regexp: "# Enable defines if the API(.*)\\senable = false"
@@ -92,6 +93,7 @@
   when: node_type == 'rpc'
 
 - name: Enable Swagger
+  become_user: "{{ user }}"
   lineinfile:
     path: $HOME/{{ root }}/config/app.toml
     regexp: 'swagger = '
@@ -100,6 +102,7 @@
   when: node_type == 'rpc'
 
 - name: Enable gRPC
+  become_user: "{{ user }}"
   replace:
     path: $HOME/{{ root }}/config/app.toml
     regexp: "# Enable defines if the gRPC(.*)\\senable = false"
