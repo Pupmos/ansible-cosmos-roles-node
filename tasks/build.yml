@@ -2,15 +2,15 @@
 - name: Build
   block:
     - name: RocksDB
-      include: backends/rocksdb.yml
+      include_tasks: backends/rocksdb.yml
       when: db_backend == 'rocksdb'
 
     - name: PebbleDB
-      include: backends/pebbledb.yml
+      include_tasks: backends/pebbledb.yml
       when: db_backend == 'pebbledb'
 
     - name: LevelDB
-      include: backends/goleveldb.yml
+      include_tasks: backends/goleveldb.yml
       when: db_backend == 'goleveldb'
   when: (binary_release is not defined) or (binary_release == "false") or (binary_release == "")
 

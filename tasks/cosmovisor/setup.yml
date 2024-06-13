@@ -6,14 +6,14 @@
 - name: Copy cosmovisor.service
   template:
     src: cosmovisor.service.j2
-    dest: /etc/systemd/system/cosmovisor.service
+    dest: "/etc/systemd/system/cosmovisor-{{ node_type }}.service"
     owner: root
     group: root
     mode: "0644"
 
 - name: Set cosmovisor to start on boot
   systemd:
-    name: cosmovisor
+    name: "cosmovisor-{{ node_type }}"
     enabled: yes
     masked: no
 
@@ -29,13 +29,13 @@
 
 - name: Allow the user to run cosmovisor
   community.general.sudoers:
-    name: cosmovisor
+    name: "cosmovisor-{{ node_type }}"
     state: present
     user: "{{ user }}"
     commands:
-      - /usr/sbin/service cosmovisor stop
-      - /usr/sbin/service cosmovisor start
-      - /usr/sbin/service cosmovisor restart
+      - "/usr/sbin/service cosmovisor-{{ node_type }} stop"
+      - "/usr/sbin/service cosmovisor-{{ node_type }} start"
+      - "/usr/sbin/service cosmovisor-{{ node_type }} restart"
 
 - name: Copy the binary
   become_user: "{{ user }}"

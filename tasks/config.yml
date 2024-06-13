@@ -9,7 +9,7 @@
   lineinfile:
     path: $HOME/{{ root }}/config/config.toml
     regexp: 'external_address = "'
-    line: 'external_address = "{{ ip_address.json.ip }}:26656"'
+    line: 'external_address = "{{ ip_address.json.ip }}:{{ p2p_port }}"'
     state: present
 
 - name: Set moniker

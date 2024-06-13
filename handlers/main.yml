@@ -1,5 +1,5 @@
 ---
 - name: Restart cosmovisor
   become_user: "{{ user }}"
-  shell: sudo service cosmovisor restart
+  shell: "sudo service cosmovisor-{{ node_type }} restart"
   listen: "restart cosmovisor"

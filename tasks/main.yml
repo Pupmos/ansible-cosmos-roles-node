@@ -1,21 +1,21 @@
 ---
 - name: Setup
   block:
-    - include: build.yml
+    - include_tasks: build.yml
 
-    - include: init.yml
+    - include_tasks: init.yml
 
-    - include: genesis.yml
+    - include_tasks: genesis.yml
 
-    - include: cosmovisor/setup.yml
+    - include_tasks: cosmovisor/setup.yml
 
-    - include: cosmovisor/upgrades.yml
+    - include_tasks: cosmovisor/upgrades.yml
       when: (upgrade is defined) and (upgrade != "")
 
-    - include: snapshot.yml
+    - include_tasks: snapshot.yml
       when: apply_snapshot == "yes"
 
-    - include: config.yml
+    - include_tasks: config.yml
 
     - name: Restart cosmovisor
       command: echo "restarting cosmovisor"
@@ -24,9 +24,9 @@
 
 - name: Upgrade
   block:
-    - include: build.yml
+    - include_tasks: build.yml
 
-    - include: cosmovisor/upgrades.yml
+    - include_tasks: cosmovisor/upgrades.yml
 
     - name: Restart cosmovisor
       command: echo "restarting cosmovisor"

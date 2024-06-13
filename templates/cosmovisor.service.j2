@@ -14,7 +14,7 @@ Type=simple
 Restart=always
 RestartSec=3
 User={{ user }}
-ExecStart=/home/{{ user }}/go/bin/cosmovisor start --rpc.laddr tcp://0.0.0.0:26657
+ExecStart=/home/{{ user }}/go/bin/cosmovisor start --rpc.laddr tcp://0.0.0.0:{{ p2p_port }}
 
 [Install]
 WantedBy=multi-user.target
